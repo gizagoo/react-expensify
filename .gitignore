@@ -1,3 +1,4 @@
 node_modules/
 oldstuff/
 public/dist/
+yarn-error.log
