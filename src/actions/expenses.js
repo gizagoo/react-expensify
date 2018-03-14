@@ -9,7 +9,8 @@ import database from '../firebase/firebase';
   });
 
 export const startAddExpense = (expenseData = {}) => {
-  return (dispatch) => {  // Return this function
+  return (dispatch, getState) => {  // Return this function
+    const uid = getState().auth.uid;
     const {
       description = '',
       note = '',
@@ -18,7 +19,7 @@ export const startAddExpense = (expenseData = {}) => {
     } = expenseData;  // Use expenseData or the defaults above
     const expense = { description, note, amount, createdAt }; // Object to pass to firebase
       // Return so that we can chain promises when testing
-      return database.ref('expenses').push(expense).then( (ref) => { // Push to firebase to get id
+      return database.ref(`users/${uid}/expenses`).push(expense).then( (ref) => { // Push to firebase to get id
       dispatch(addExpense({ // When done update redux with object including generated id (key)
         id: ref.key,          // Key from firebase
         ...expense            // plus - Spread this object
@@ -34,8 +35,9 @@ export const startAddExpense = (expenseData = {}) => {
   });
 
   export const startRemoveExpense = ({id}  = {}) => {
-    return (dispatch) => {
-      return database.ref(`expenses/${id}`).remove().then(() => {
+    return (dispatch, getState) => {
+      const uid = getState().auth.uid;
+      return database.ref(`users/${uid}/expenses/${id}`).remove().then(() => {
         dispatch(removeExpense({id}));
       });
     };
@@ -49,8 +51,9 @@ export const startAddExpense = (expenseData = {}) => {
   });
 
   export const startEditExpense = (id, updates) => {
-    return (dispatch) => {
-      return database.ref(`expenses/${id}`).update(updates).then(() => {
+    return (dispatch, getState) => {
+      const uid = getState().auth.uid;
+      return database.ref(`users/${uid}/expenses/${id}`).update(updates).then(() => {
         dispatch(editExpense(id, updates));
       });
     };
@@ -62,9 +65,10 @@ export const setExpenses = (expenses) => ({
     expenses
 });
 
-export const startSetExpenses = (() => {
-  return (dispatch => {
-    return database.ref('expenses').once('value').then ((snapshot) => {
+export const startSetExpenses = () => {
+  return (dispatch, getState) => {
+    const uid = getState().auth.uid;
+    return database.ref(`users/${uid}/expenses`).once('value').then ((snapshot) => {
       const expenses = []; //to create format we want
       
       snapshot.forEach((childSnapshot) => {
@@ -76,5 +80,5 @@ export const startSetExpenses = (() => {
 
       dispatch(setExpenses(expenses));
     });
-  });
-});
+  };
+};
